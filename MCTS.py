@@ -247,43 +247,43 @@ def expansion(current_node):
         b.undo(move)
 
 
-# check expansion with board prints
+
 
 
 def rollout(current_node):
-    # print("rollout")
-    while (b.win() == False) and (len(b.legalmoves()) != 0):  # broken
-        # b.printboard()
+    
+    while (b.win() == False) and (len(b.legalmoves()) != 0):  
+        
         moves = b.legalmoves()
         try:
             move = random.choice(moves)
             b.move(move)
         except:
 
-            current_node.score += 0  # changed to += instead of =
-            # print('draw')
+            current_node.score += 0  
+            
     result = b.win()
-    # print(result)
+    
     if result == False:
         result = 0
-    current_node.reward = result  # changed from score to reward adn += to =
+    current_node.reward = result  
 
 
 def backpropagation(result, List):
-    # print("backpropagate")
+    
     for node in range(len(List)):
         # if result == -1:
         #   List[node].score += -1
         if result == 1:
             List[node].score += 1
         # elif result == 0:
-        #   List[node].score += 0  # check here again, seems to always add 0
+        #   List[node].score += 0  
 
         List[node].visits += 1
 
 
 b.resetboard()
-rootnode = Nodes(0)  # need to pass this to selection as a current node.
+rootnode = Nodes(0)  
 List = []
 
 L_0 = 0
@@ -297,21 +297,21 @@ for i in range(500000):
         print(i)
     List = []
     result = selection(rootnode, List)
-    # b.printboard()
+    
     if result[0] == True:
-        # this is the end of the game
+        
         # rollout(result[1])
 
         backpropagation(result[1].reward, List)
 
-    else:  # this means leaf node
+    else:  
 
         if result[1].visits == 0:
 
             rollout(result[1])
             backpropagation(result[1].reward, List)
 
-        else:  # i changed this from somthing else
+        else:  
 
             expansion(result[1])
             List = []
