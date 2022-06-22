@@ -4,6 +4,7 @@ import copy
 from ordered_set import OrderedSet
 
 
+
 class Board:
     def __init__(self):
         self.player = 1
@@ -165,7 +166,7 @@ def ucb1(current_node, parent_node):
     if current_node.visits == 0:
         return math.inf
 
-    UCB = (current_node.score / current_node.visits) + 200 * (
+    UCB = float(current_node.score / current_node.visits) + 200 * (
         math.sqrt((math.log(parent_node.visits)) / current_node.visits)
     )
     # print("UCB=", UCB)
@@ -247,43 +248,43 @@ def expansion(current_node):
         b.undo(move)
 
 
-
+# check expansion with board prints
 
 
 def rollout(current_node):
-    
-    while (b.win() == False) and (len(b.legalmoves()) != 0):  
-        
+    # print("rollout")
+    while (b.win() == False) and (len(b.legalmoves()) != 0):  # broken
+        # b.printboard()
         moves = b.legalmoves()
         try:
             move = random.choice(moves)
             b.move(move)
         except:
 
-            current_node.score += 0  
-            
+            current_node.score += 0  # changed to += instead of =
+            # print('draw')
     result = b.win()
-    
+    # print(result)
     if result == False:
         result = 0
-    current_node.reward = result  
+    current_node.reward = result  # changed from score to reward adn += to =
 
 
 def backpropagation(result, List):
-    
+    # print("backpropagate")
     for node in range(len(List)):
         # if result == -1:
         #   List[node].score += -1
         if result == 1:
             List[node].score += 1
         # elif result == 0:
-        #   List[node].score += 0  
+        #   List[node].score += 0  # check here again, seems to always add 0
 
         List[node].visits += 1
 
 
 b.resetboard()
-rootnode = Nodes(0)  
+rootnode = Nodes(0)  # need to pass this to selection as a current node.
 List = []
 
 L_0 = 0
@@ -291,27 +292,27 @@ L_1 = 0
 L_minus = 0
 
 expansion(rootnode)
-for i in range(500000):
+for i in range(100000):
     if i % 10000 == 0:
 
         print(i)
     List = []
     result = selection(rootnode, List)
-    
+    # b.printboard()
     if result[0] == True:
-        
+        # this is the end of the game
         # rollout(result[1])
 
         backpropagation(result[1].reward, List)
 
-    else:  
+    else:  # this means leaf node
 
         if result[1].visits == 0:
 
             rollout(result[1])
             backpropagation(result[1].reward, List)
 
-        else:  
+        else:  # i changed this from somthing else
 
             expansion(result[1])
             List = []
@@ -345,28 +346,29 @@ with open("setboards.txt", "a") as f:
 
 def Bestmove(current_node):
     bestchild = 0
-    max_value = -1000
+    max_value = -100000
     bestmove = -1
     if current_node != -math.inf:
-
         for child in range(0, len(current_node.children)):
-            if current_node.children[child] != -math.inf:
-                value = current_node.children[child].score
+            if child in b.legalmoves():
 
-                if value > max_value:
-                    max_value = value
-                    bestchild = current_node.children[child]
-                    bestmove = child
+                if current_node.children[child] != -math.inf:
+                    value = current_node.children[child].score
 
-        if bestmove == -1:
-            moves = b.legalmoves()
-            bestmove = random.choice(moves)
+                    if value > max_value:
+                        max_value = value
+                        bestchild = current_node.children[child]
+                        bestmove = child
+
+    if bestmove == -1:
+        moves = b.legalmoves()
+        bestmove = random.choice(moves)
 
     return bestmove
 
 
 # computer first
-
+"""
 b.resetboard()
 current = rootnode
 while b.win() == False:
@@ -381,7 +383,8 @@ while b.win() == False:
 
     current = current.children[position]
     b.printboard()
-
+"""
+"""
 # player first
 b.resetboard()
 current = rootnode
@@ -396,3 +399,110 @@ while b.win() == False:
     b.move(move)
 
     b.printboard()
+"""
+
+# test
+
+win = 0
+draw = 0
+loss = 0
+
+for i in range(100000):
+    b.resetboard()
+    current = rootnode
+    Losing = []
+    while (b.win() == False) and (len(b.legalmoves()) != 0):
+
+        move = Bestmove(current)
+        b.move(move)
+        board = b.gamestate()
+        test = ""
+        for x in current.children:
+            if x != -math.inf:
+                test = test + "," + str(x.score)
+            else:
+                test = test + "," + "blank"
+        Losing.append(
+            "\n"
+            + test
+            + "\n"
+            + "###############"
+            + "\n"
+            + board[0]
+            + "|"
+            + board[1]
+            + "|"
+            + board[2]
+            + "\n"
+            + "-+-+-"
+            + "\n"
+            + board[3]
+            + "|"
+            + board[4]
+            + "|"
+            + board[5]
+            + "\n"
+            + "-+-+-"
+            + "\n"
+            + board[6]
+            + "|"
+            + board[7]
+            + "|"
+            + board[8]
+        )
+        try:
+            current = current.children[move]
+        except:
+            pass
+
+        if (b.win() == False) and (len(b.legalmoves()) != 0):
+            moves = b.legalmoves()
+            move = random.choice(moves)
+            b.move(move)
+            board = b.gamestate()
+            Losing.append(
+                "\n"
+                + "###############"
+                + "\n"
+                + board[0]
+                + "|"
+                + board[1]
+                + "|"
+                + board[2]
+                + "\n"
+                + "-+-+-"
+                + "\n"
+                + board[3]
+                + "|"
+                + board[4]
+                + "|"
+                + board[5]
+                + "\n"
+                + "-+-+-"
+                + "\n"
+                + board[6]
+                + "|"
+                + board[7]
+                + "|"
+                + board[8]
+            )
+            try:
+                current = current.children[move]
+            except:
+                pass
+
+    if b.win() == 1:
+        win += 1
+    if b.win() == -1:
+        loss += 1
+        with open("lossboards.txt", "a") as f:
+            f.writelines(Losing)
+    if (len(b.legalmoves()) == 0) and (b.win() != 1) and (b.win() != -1):
+        draw += 1
+
+
+print("Wins:", win)
+
+print("Draw:", draw)
+
+print("Loss:", loss)
